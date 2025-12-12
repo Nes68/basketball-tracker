@@ -524,7 +524,7 @@
       state.currentGame.points += points;
       saveState();
       updateUIFromState();
-window.addEventListener("firebase-ready", function () {
+window.addEventListener("firebase-ready", () => {
   try {
     loadState();
     updateUIFromState();
@@ -532,7 +532,6 @@ window.addEventListener("firebase-ready", function () {
     console.error("firebase-ready handler failed:", e);
   }
 });
-
     </script>
 <script type="module">
   // Firebase SDKs
@@ -559,6 +558,7 @@ setTimeout(() => window.dispatchEvent(new Event("firebase-ready")), 0);
 
 </body>
 </html>
+
 
 
 
