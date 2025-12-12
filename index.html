@@ -527,6 +527,36 @@
 
     // Init
     loadState();
-  </script>
+<script>
+  // your existing app code
+  loadState();
+</script>
+
+    <script type="module">
+  // Firebase SDKs
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+
+  // Your Firebase config (from Step 4E)
+  const firebaseConfig = {
+    apiKey: "AIzaSyAtyhhBlbhLHZhhXvcyfjS3R3LiRDuTA",
+    authDomain: "kids-basketball-2025.firebaseapp.com",
+    projectId: "kids-basketball-2025",
+    storageBucket: "kids-basketball-2025.firebasestorage.app",
+    messagingSenderId: "728713310126",
+    appId: "1:728713310126:web:49b5faaa243ea9d61e623f",
+    measurementId: "G-HPL4PTM4TT"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Make db globally available (we’ll use this next)
+  window.db = db;
+</script>
+
+
 </body>
 </html>
+
