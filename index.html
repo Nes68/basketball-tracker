@@ -523,7 +523,11 @@
       state.currentGame.points += points;
       saveState();
       updateUIFromState();
-    });
+    window.addEventListener("firebase-ready", () => {
+  loadState();
+  updateUIFromState();
+});
+
     </script>
 <script type="module">
   // Firebase SDKs
@@ -543,18 +547,14 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  window.db = db;
-
-  // expose loadState to the page
-  window.loadState = loadState;
-
-  // now safely call it
-  loadState();
+window.db = db;
+window.dispatchEvent(new Event("firebase-ready"));
 </script>
 
 
 </body>
 </html>
+
 
 
 
