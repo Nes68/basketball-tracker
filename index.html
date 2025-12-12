@@ -524,6 +524,7 @@
       state.currentGame.points += points;
       saveState();
       updateUIFromState();
+      });
 window.addEventListener("firebase-ready", () => {
   try {
     loadState();
@@ -558,6 +559,7 @@ setTimeout(() => window.dispatchEvent(new Event("firebase-ready")), 0);
 
 </body>
 </html>
+
 
 
 
