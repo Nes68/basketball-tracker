@@ -552,12 +552,13 @@ window.addEventListener("firebase-ready", function () {
   const db = getFirestore(app);
 
 window.db = db;
-window.dispatchEvent(new Event("firebase-ready"));
+setTimeout(() => window.dispatchEvent(new Event("firebase-ready")), 0);
 </script>
 
 
 </body>
 </html>
+
 
 
 
