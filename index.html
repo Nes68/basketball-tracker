@@ -1,34 +1,532 @@
-const CACHE_NAME = "macy-miranda-tracker-v1";
-const URLS_TO_CACHE = [
-  "/basketball-tracker/",
-  "/basketball-tracker/index.html",
-  "/basketball-tracker/manifest.json"
-];
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kids Basketball Points Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 1rem;
+      background: #f4f4f4;
+      color: #222;
+    }
+    h1, h2, h3 {
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
+      font-weight: 600;
+    }
+    input[type="text"], input[type="date"], input[type="number"], select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    .button {
+      display: inline-block;
+      padding: 0.5rem 0.9rem;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin: 0.2rem;
+      min-width: 60px;
+      text-align: center;
+    }
+    .button-primary {
+      background: #2563eb;
+      color: white;
+    }
+    .button-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .button-danger {
+      background: #dc2626;
+      color: white;
+    }
+    .button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .kids-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.5rem;
+    }
+    .kids-row > div {
+      flex: 1 1 140px;
+    }
+    .score-card {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 0.75rem;
+      text-align: center;
+    }
+    .score-name {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .score-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+    .score-buttons {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .score-buttons .button {
+      font-size: 0.85rem;
+      min-width: 45px;
+    }
+    .small-text {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 0.4rem;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: center;
+    }
+    th {
+      background: #f9fafb;
+      font-weight: 600;
+    }
+    .no-games {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-top: 0.5rem;
+    }
+    .top-right-print {
+      text-align: right;
+      margin-bottom: 0.25rem;
+    }
+    @media print {
+      body {
+        background: #fff;
+        padding: 0.5rem;
+      }
+      .card {
+        box-shadow: none;
+        margin-bottom: 0.75rem;
+      }
+      .top-right-print, #kidsSavedMsg {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(URLS_TO_CACHE))
-  );
-});
+  <h1>Basketball Points Tracker</h1>
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(
-        names.map((name) => {
-          if (name !== CACHE_NAME) {
-            return caches.delete(name);
+  <!-- Kids Setup -->
+  <div class="card">
+    <h2>Kids</h2>
+    <div class="kids-row">
+      <div>
+        <label for="kid1Name">Kid 1 name</label>
+        <input type="text" id="kid1Name" placeholder="Macy">
+      </div>
+      <div>
+        <label for="kid2Name">Kid 2 name</label>
+        <input type="text" id="kid2Name" placeholder="Miranda">
+      </div>
+    </div>
+    <button class="button button-primary" id="saveKidsButton">Save Names</button>
+    <span class="small-text" id="kidsSavedMsg"></span>
+  </div>
+
+  <!-- New Game -->
+  <div class="card">
+    <h2>New Game</h2>
+
+    <label for="kidSelect">Which kid is this game for?</label>
+    <select id="kidSelect"></select>
+
+    <label for="gameDate">Game date</label>
+    <input type="date" id="gameDate">
+
+    <label for="gameOpponent">Opponent / Team (optional)</label>
+    <input type="text" id="gameOpponent" placeholder="e.g. vs Wildcats">
+
+    <button class="button button-primary" id="startGameButton">Start Game</button>
+    <button class="button button-secondary" id="resetCurrentGameButton" disabled>Reset Current Game</button>
+    <div class="small-text" id="currentGameInfo"></div>
+  </div>
+
+  <!-- Live Scoring -->
+  <div class="card">
+    <h2>Live Points</h2>
+    <div class="small-text">Tap the buttons while you watch the game.</div>
+
+    <div class="score-card" style="margin-top:0.75rem;">
+      <div class="score-name" id="activeKidLabel">No active game</div>
+      <div class="score-value" id="activeKidScore">0</div>
+      <div class="score-buttons">
+        <button class="button button-secondary" data-points="1">+1</button>
+        <button class="button button-secondary" data-points="2">+2</button>
+        <button class="button button-secondary" data-points="3">+3</button>
+      </div>
+    </div>
+
+    <div style="margin-top:1rem;">
+      <label for="teamScoreInput">Team final score (your kid's team)</label>
+      <input type="number" id="teamScoreInput" min="0" placeholder="e.g. 32">
+
+      <label for="oppScoreInput">Opponent final score</label>
+      <input type="number" id="oppScoreInput" min="0" placeholder="e.g. 28">
+    </div>
+
+    <div style="margin-top:0.75rem; text-align:center;">
+      <button class="button button-primary" id="endGameButton">End Game & Save</button>
+    </div>
+  </div>
+
+  <!-- Game History -->
+  <div class="card">
+    <div class="top-right-print">
+      <button class="button button-secondary" onclick="window.print()">Print History & Stats</button>
+    </div>
+    <h2>Game History</h2>
+    <div class="small-text">Each row is one kid's game. You can have multiple games on the same date.</div>
+    <div id="gamesContainer"></div>
+  </div>
+
+  <!-- Season Stats -->
+  <div class="card">
+    <h2>Season Stats</h2>
+    <div class="small-text">Totals and averages per game for each kid.</div>
+    <div id="statsContainer"></div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "kids_bball_tracker_kidgames_v2_scores";
+
+    let state = {
+      kids: ["Macy", "Miranda"],
+      currentGame: null, // {kidIndex, date, opponent, points, teamScore, opponentScore}
+      games: []          // array of {kidIndex, date, opponent, points, teamScore, opponentScore}
+    };
+
+    function $(id) {
+      return document.getElementById(id);
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.kids && parsed.games) {
+            state = parsed;
+            while (state.kids.length < 2) {
+              state.kids.push("Kid " + (state.kids.length + 1));
+            }
+            // Backward compatibility if any game is missing team scores
+            state.games.forEach(g => {
+              if (typeof g.teamScore === "undefined") g.teamScore = null;
+              if (typeof g.opponentScore === "undefined") g.opponentScore = null;
+            });
+            if (state.currentGame) {
+              if (typeof state.currentGame.teamScore === "undefined") state.currentGame.teamScore = null;
+              if (typeof state.currentGame.opponentScore === "undefined") state.currentGame.opponentScore = null;
+            }
           }
-        })
-      )
-    )
-  );
-});
+        }
+      } catch (e) {
+        console.error("Error loading state", e);
+      }
+      updateUIFromState();
+    }
 
-self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
-  );
-});
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function updateKidSelect() {
+      const select = $("kidSelect");
+      select.innerHTML = "";
+      state.kids.forEach((name, index) => {
+        const opt = document.createElement("option");
+        opt.value = index;
+        opt.textContent = name || ("Kid " + (index + 1));
+        select.appendChild(opt);
+      });
+      if (state.currentGame) {
+        select.value = String(state.currentGame.kidIndex);
+      }
+    }
+
+    function updateUIFromState() {
+      $("kid1Name").value = state.kids[0] || "Macy";
+      $("kid2Name").value = state.kids[1] || "Miranda";
+
+      updateKidSelect();
+
+      if (state.currentGame) {
+        const kidName = state.kids[state.currentGame.kidIndex] || "Kid";
+        $("currentGameInfo").textContent =
+          "Game for " + kidName +
+          " on " + state.currentGame.date +
+          (state.currentGame.opponent ? (" — " + state.currentGame.opponent) : "");
+        $("activeKidLabel").textContent = kidName + " points this game";
+        $("activeKidScore").textContent = state.currentGame.points;
+        $("resetCurrentGameButton").disabled = false;
+
+        $("teamScoreInput").value =
+          state.currentGame.teamScore !== null && state.currentGame.teamScore !== undefined
+            ? state.currentGame.teamScore
+            : "";
+        $("oppScoreInput").value =
+          state.currentGame.opponentScore !== null && state.currentGame.opponentScore !== undefined
+            ? state.currentGame.opponentScore
+            : "";
+      } else {
+        $("currentGameInfo").textContent = "No active game. Start a new one above.";
+        $("activeKidLabel").textContent = "No active game";
+        $("activeKidScore").textContent = "0";
+        $("resetCurrentGameButton").disabled = true;
+        $("teamScoreInput").value = "";
+        $("oppScoreInput").value = "";
+      }
+
+      renderGamesTable();
+      renderStats();
+    }
+
+    function renderGamesTable() {
+      const container = $("gamesContainer");
+      if (!state.games.length) {
+        container.innerHTML = '<div class="no-games">No games saved yet.</div>';
+        return;
+      }
+
+      let html = '<table><thead><tr>' +
+                 '<th>#</th>' +
+                 '<th>Date</th>' +
+                 '<th>Kid</th>' +
+                 '<th>Opponent / Team</th>' +
+                 '<th>Kid Points</th>' +
+                 '<th>Team Score</th>' +
+                 '<th>Opponent Score</th>' +
+                 '<th></th>' +
+                 '</tr></thead><tbody>';
+
+      state.games.forEach((g, index) => {
+        const kidName = state.kids[g.kidIndex] || ("Kid " + (g.kidIndex + 1));
+        const teamScoreDisplay = (typeof g.teamScore === "number") ? g.teamScore : "";
+        const oppScoreDisplay = (typeof g.opponentScore === "number") ? g.opponentScore : "";
+
+        html += '<tr>' +
+                '<td>' + (index + 1) + '</td>' +
+                '<td>' + g.date + '</td>' +
+                '<td>' + kidName + '</td>' +
+                '<td>' + (g.opponent || "") + '</td>' +
+                '<td>' + g.points + '</td>' +
+                '<td>' + teamScoreDisplay + '</td>' +
+                '<td>' + oppScoreDisplay + '</td>' +
+                '<td><button class="button button-danger" data-delete-index="' + index + '">X</button></td>' +
+                '</tr>';
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+
+      container.querySelectorAll("button[data-delete-index]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = parseInt(btn.getAttribute("data-delete-index"), 10);
+          if (!isNaN(idx)) {
+            if (confirm("Delete game #" + (idx + 1) + "?")) {
+              state.games.splice(idx, 1);
+              saveState();
+              updateUIFromState();
+            }
+          }
+        });
+      });
+    }
+
+    function renderStats() {
+      const container = $("statsContainer");
+      const games = state.games;
+
+      if (!games.length) {
+        container.innerHTML = '<div class="no-games">No stats yet — save at least one game.</div>';
+        return;
+      }
+
+      const totals = [0, 0];
+      const gamesCount = [0, 0];
+
+      games.forEach(g => {
+        if (g.kidIndex === 0 || g.kidIndex === 1) {
+          totals[g.kidIndex] += g.points;
+          gamesCount[g.kidIndex] += 1;
+        }
+      });
+
+      let html = '<table><thead><tr>' +
+                 '<th>Kid</th>' +
+                 '<th>Total Points</th>' +
+                 '<th>Games Played</th>' +
+                 '<th>Avg Points / Game</th>' +
+                 '</tr></thead><tbody>';
+
+      [0, 1].forEach(i => {
+        const kidName = state.kids[i] || ("Kid " + (i + 1));
+        const total = totals[i];
+        const count = gamesCount[i];
+        const avg = count > 0 ? (total / count).toFixed(1) : "0.0";
+
+        html += '<tr>' +
+                '<td>' + kidName + '</td>' +
+                '<td>' + total + '</td>' +
+                '<td>' + count + '</td>' +
+                '<td>' + avg + '</td>' +
+                '</tr>';
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    // --- Event handlers ---
+
+    $("saveKidsButton").addEventListener("click", () => {
+      const k1 = $("kid1Name").value.trim() || "Macy";
+      const k2 = $("kid2Name").value.trim() || "Miranda";
+      state.kids = [k1, k2];
+      saveState();
+      $("kidsSavedMsg").textContent = "Saved!";
+      setTimeout(() => $("kidsSavedMsg").textContent = "", 1500);
+      updateUIFromState();
+    });
+
+    $("startGameButton").addEventListener("click", () => {
+      const kidIndex = parseInt($("kidSelect").value, 10) || 0;
+
+      let date = $("gameDate").value;
+      if (!date) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, "0");
+        const dd = String(today.getDate()).padStart(2, "0");
+        date = yyyy + "-" + mm + "-" + dd;
+      }
+
+      const opponent = $("gameOpponent").value.trim();
+
+      state.currentGame = {
+        kidIndex,
+        date,
+        opponent,
+        points: 0,
+        teamScore: null,
+        opponentScore: null
+      };
+
+      $("teamScoreInput").value = "";
+      $("oppScoreInput").value = "";
+
+      saveState();
+      updateUIFromState();
+    });
+
+    $("resetCurrentGameButton").addEventListener("click", () => {
+      if (state.currentGame) {
+        if (confirm("Reset points and scores for this game?")) {
+          state.currentGame.points = 0;
+          state.currentGame.teamScore = null;
+          state.currentGame.opponentScore = null;
+          $("teamScoreInput").value = "";
+          $("oppScoreInput").value = "";
+          saveState();
+          updateUIFromState();
+        }
+      }
+    });
+
+    $("endGameButton").addEventListener("click", () => {
+      if (!state.currentGame) {
+        alert("No active game. Start a new game first.");
+        return;
+      }
+
+      const teamScoreVal = $("teamScoreInput").value.trim();
+      const oppScoreVal = $("oppScoreInput").value.trim();
+
+      if (teamScoreVal !== "") {
+        state.currentGame.teamScore = Number(teamScoreVal);
+      } else {
+        state.currentGame.teamScore = null;
+      }
+
+      if (oppScoreVal !== "") {
+        state.currentGame.opponentScore = Number(oppScoreVal);
+      } else {
+        state.currentGame.opponentScore = null;
+      }
+
+      if (
+        state.currentGame.points === 0 &&
+        (state.currentGame.teamScore === null || state.currentGame.teamScore === 0) &&
+        (state.currentGame.opponentScore === null || state.currentGame.opponentScore === 0)
+      ) {
+        const proceed = confirm("Everything is 0/empty. Save game anyway?");
+        if (!proceed) return;
+      }
+
+      state.games.push({ ...state.currentGame });
+      state.currentGame = null;
+      saveState();
+      updateUIFromState();
+      alert("Game saved to history!");
+    });
+
+    document.body.addEventListener("click", (e) => {
+      const btn = e.target;
+      if (!btn.matches("button[data-points]")) return;
+      if (!state.currentGame) {
+        alert("Start a game first.");
+        return;
+      }
+      const points = parseInt(btn.getAttribute("data-points"), 10) || 0;
+      state.currentGame.points += points;
+      saveState();
+      updateUIFromState();
+    });
+
+    // Init
+    loadState();
+  </script>
+</body>
+</html>
