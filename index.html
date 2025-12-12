@@ -524,18 +524,11 @@
       saveState();
       updateUIFromState();
     });
-
-<script>
-  // Init
-  loadState();
-</script>
-
-    <script type="module">
+<script type="module">
   // Firebase SDKs
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
   import { getFirestore } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-  // Your Firebase config (from Step 4E)
   const firebaseConfig = {
     apiKey: "AIzaSyAtyhhBlbhLHZhhXvcyfjS3R3LiRDuTA",
     authDomain: "kids-basketball-2025.firebaseapp.com",
@@ -546,16 +539,21 @@
     measurementId: "G-HPL4PTM4TT"
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // Make db globally available (we’ll use this next)
   window.db = db;
+
+  // expose loadState to the page
+  window.loadState = loadState;
+
+  // now safely call it
+  loadState();
 </script>
 
 
 </body>
 </html>
+
 
 
